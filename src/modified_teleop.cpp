@@ -24,6 +24,7 @@ OpenManipulatorTeleop::OpenManipulatorTeleop()
 {
   present_joint_angle_.resize(NUM_OF_JOINT);
   present_kinematic_position_.resize(3);
+  input_kinematic_position_.resize(3, 0.0);
 
   initClient();
   initSubscriber();
@@ -54,6 +55,8 @@ void OpenManipulatorTeleop::initSubscriber()
 {
   joint_states_sub_ = node_handle_.subscribe("joint_states", 10, &OpenManipulatorTeleop::jointStatesCallback, this);
   kinematics_pose_sub_ = node_handle_.subscribe("kinematics_pose", 10, &OpenManipulatorTeleop::kinematicsPoseCallback, this);
+  input_kinematics_pose_sub_ = node_handle_.subscribe("input_kinematics_pose", 10, &OpenManipulatorTeleop::kinematicsPoseinput, this);
+
 }
 
 void OpenManipulatorTeleop::jointStatesCallback(const sensor_msgs::JointState::ConstPtr &msg)
@@ -78,6 +81,15 @@ void OpenManipulatorTeleop::kinematicsPoseCallback(const open_manipulator_msgs::
   temp_position.push_back(msg->pose.position.y);
   temp_position.push_back(msg->pose.position.z);
   present_kinematic_position_ = temp_position;
+}
+
+void OpenManipulatorTeleop::kinematicsPoseinput(const open_manipulator_msgs::KinematicsPose::ConstPtr &msg)
+{
+  std::vector<double> temp_position;
+  temp_position.push_back(msg->pose.position.x);
+  temp_position.push_back(msg->pose.position.y);
+  temp_position.push_back(msg->pose.position.z);
+  input_kinematic_position_ = temp_position;
 }
 
 std::vector<double> OpenManipulatorTeleop::getPresentJointAngle()
@@ -393,15 +405,13 @@ void OpenManipulatorTeleop::setGoal(char ch)
   {
     printf("input : 4 \tnew pose by position modify\n");
     //입력받아서하기
+    // input_kinematic_position_.at(0) = 0.1025;
+    // input_kinematic_position_.at(1) = 0.1060;
+    // input_kinematic_position_.at(2) = 0.2380;
 
-    std::vector<double> originPose;  originPose.resize(3, 0.0);//goal pose by origin
-    originPose.at(0) = 0.1025;
-    originPose.at(1) = 0.1060;
-    originPose.at(2) = 0.2380;
-
-    goalPose.at(0) = originPose.at(0) - getPresentKinematicsPose().at(0);
-    goalPose.at(1) = originPose.at(1) - getPresentKinematicsPose().at(1);
-    goalPose.at(2) = originPose.at(2) - getPresentKinematicsPose().at(2);
+    goalPose.at(0) = input_kinematic_position_.at(0) - getPresentKinematicsPose().at(0);
+    goalPose.at(1) = input_kinematic_position_.at(1) - getPresentKinematicsPose().at(1);
+    goalPose.at(2) = input_kinematic_position_.at(2) - getPresentKinematicsPose().at(2);
 
     setTaskSpacePathFromPresentPositionOnly(goalPose, PATH_TIME);
   }

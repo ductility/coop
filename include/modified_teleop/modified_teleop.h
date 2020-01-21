@@ -29,9 +29,11 @@ class OpenManipulatorTeleop
 
   ros::Subscriber joint_states_sub_;
   ros::Subscriber kinematics_pose_sub_;
+  ros::Subscriber input_kinematics_pose_sub_;//kk
 
   std::vector<double> present_joint_angle_;
   std::vector<double> present_kinematic_position_;
+  std::vector<double> input_kinematic_position_;//goal position(input)
   open_manipulator_msgs::KinematicsPose kinematics_pose_;
 
 
@@ -47,6 +49,8 @@ class OpenManipulatorTeleop
 
   void jointStatesCallback(const sensor_msgs::JointState::ConstPtr &msg);
   void kinematicsPoseCallback(const open_manipulator_msgs::KinematicsPose::ConstPtr &msg);
+
+  void kinematicsPoseinput(const open_manipulator_msgs::KinematicsPose::ConstPtr &msg);
 
   std::vector<double> getPresentJointAngle();
   std::vector<double> getPresentKinematicsPose();
