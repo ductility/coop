@@ -17,6 +17,7 @@
 /* Authors: Darby Lim, Hye-Jong KIM, Ryan Shim, Yong-Ho Na */
 
 #include "modified_teleop/modified_teleop.h"
+#include <unistd.h>
 
 OpenManipulatorTeleop::OpenManipulatorTeleop()
     :node_handle_(""),
@@ -83,12 +84,12 @@ void OpenManipulatorTeleop::kinematicsPoseCallback(const open_manipulator_msgs::
   present_kinematic_position_ = temp_position;
 }
 
-void OpenManipulatorTeleop::kinematicsPoseinput(const open_manipulator_msgs::KinematicsPose::ConstPtr &msg)
+void OpenManipulatorTeleop::kinematicsPoseinput(const geometry_msgs::Pose::ConstPtr &msg)
 {
   std::vector<double> temp_position;
-  temp_position.push_back(msg->pose.position.x);
-  temp_position.push_back(msg->pose.position.y);
-  temp_position.push_back(msg->pose.position.z);
+  temp_position.push_back(msg->position.x);
+  temp_position.push_back(msg->position.y);
+  temp_position.push_back(msg->position.z);
   input_kinematic_position_ = temp_position;
 }
 
@@ -99,6 +100,12 @@ std::vector<double> OpenManipulatorTeleop::getPresentJointAngle()
 std::vector<double> OpenManipulatorTeleop::getPresentKinematicsPose()
 {
   return present_kinematic_position_;
+}
+
+//inputkinematic position return
+std::vector<double> OpenManipulatorTeleop::getInputKinematicsPose()
+{
+  return input_kinematic_position_;
 }
 
 bool OpenManipulatorTeleop::setJointSpacePathFromPresent(std::vector<std::string> joint_name, std::vector<double> joint_angle, double path_time)
@@ -428,6 +435,21 @@ void OpenManipulatorTeleop::setGoal(char ch)
   }
 }
 
+// void OpenManipulatorTeleop::setGoalbyInput()
+// {
+//   std::vector<double> goalPose;  goalPose.resize(3, 0.0);
+//   std::vector<double> goalJoint; goalJoint.resize(NUM_OF_JOINT, 0.0);
+
+//   printf("new pose by input\n");
+
+//   goalPose.at(0) = input_kinematic_position_.at(0) - getPresentKinematicsPose().at(0);
+//   goalPose.at(1) = input_kinematic_position_.at(1) - getPresentKinematicsPose().at(1);
+//   goalPose.at(2) = input_kinematic_position_.at(2) - getPresentKinematicsPose().at(2);
+
+//   setTaskSpacePathFromPresentPositionOnly(goalPose, PATH_TIME);
+  
+// }
+
 void OpenManipulatorTeleop::restoreTerminalSettings(void)
 {
     tcsetattr(0, TCSANOW, &oldt_);  /* Apply saved settings */
@@ -441,6 +463,13 @@ void OpenManipulatorTeleop::disableWaitingForEnter(void)
   newt = oldt_;  /* Init new settings */
   newt.c_lflag &= ~(ICANON | ECHO);  /* Change settings */
   tcsetattr(0, TCSANOW, &newt);  /* Apply settings */
+}
+
+void print(std::vector<double> const &input)
+{
+  for (int i = 0; i < input.size(); i++) {
+    std::cout << input.at(i) << ' ';
+  }
 }
 
 int main(int argc, char **argv)

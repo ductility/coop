@@ -8,6 +8,12 @@
 #include "open_manipulator_msgs/SetJointPosition.h"
 #include "open_manipulator_msgs/SetKinematicsPose.h"
 
+#include <geometry_msgs/PoseStamped.h>
+
+#include <std_msgs/Float64.h>
+#include <std_msgs/String.h>
+#include <std_msgs/Empty.h>
+
 #define NUM_OF_JOINT 4
 #define DELTA 0.01
 #define JOINT_DELTA 0.05
@@ -50,10 +56,12 @@ class OpenManipulatorTeleop
   void jointStatesCallback(const sensor_msgs::JointState::ConstPtr &msg);
   void kinematicsPoseCallback(const open_manipulator_msgs::KinematicsPose::ConstPtr &msg);
 
-  void kinematicsPoseinput(const open_manipulator_msgs::KinematicsPose::ConstPtr &msg);
+  void kinematicsPoseinput(const geometry_msgs::Pose::ConstPtr &msg);
 
   std::vector<double> getPresentJointAngle();
   std::vector<double> getPresentKinematicsPose();
+  std::vector<double> getInputKinematicsPose();//input
+
 
   bool setJointSpacePathFromPresent(std::vector<std::string> joint_name, std::vector<double> joint_angle, double path_time);
   bool setJointSpacePath(std::vector<std::string> joint_name, std::vector<double> joint_angle, double path_time);
