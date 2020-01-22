@@ -91,6 +91,7 @@ void OpenManipulatorTeleop::kinematicsPoseinput(const geometry_msgs::Pose::Const
   temp_position.push_back(msg->position.y);
   temp_position.push_back(msg->position.z);
   input_kinematic_position_ = temp_position;
+  setGoal('4');
 }
 
 std::vector<double> OpenManipulatorTeleop::getPresentJointAngle()
@@ -475,27 +476,31 @@ void print(std::vector<double> const &input)
 int main(int argc, char **argv)
 {
   // Init ROS node
-  ros::init(argc, argv, "open_manipulator_teleop");
+  ros::init(argc, argv, "open_manipulator_modified_teleop");
 
   OpenManipulatorTeleop openManipulatorTeleop;
 
-  ROS_INFO("OpenManipulator teleoperation using keyboard start");
-  openManipulatorTeleop.disableWaitingForEnter();
+  ROS_INFO("OpenManipulator modified teleop launched");
+  // openManipulatorTeleop.disableWaitingForEnter();
 
-  ros::spinOnce();
-  openManipulatorTeleop.printText();
+  // ros::spinOnce();
+  // openManipulatorTeleop.printText();
 
-  char ch;
-  while (ros::ok() && (ch = std::getchar()) != 'q')
-  {
-    ros::spinOnce();
-    openManipulatorTeleop.printText();
-    ros::spinOnce();
-    openManipulatorTeleop.setGoal(ch);
-  }
+  // char ch;
+  // while (ros::ok() && (ch = std::getchar()) != 'q')
+  // {
+  //   ros::spinOnce();
+  //   openManipulatorTeleop.printText();
+  //   ros::spinOnce();
+  //   openManipulatorTeleop.setGoal(ch);
+  // }
 
-  printf("input : q \tTeleop. is finished\n");
-  openManipulatorTeleop.restoreTerminalSettings();
+  // printf("input : q \tTeleop. is finished\n");
+  // openManipulatorTeleop.restoreTerminalSettings();
+
+  ros::spin();
+
+
 
   return 0;
 }
