@@ -31,7 +31,9 @@ class OpenManipulatorTeleop
   ros::ServiceClient goal_joint_space_path_client_;
   ros::ServiceClient goal_tool_control_client_;
   ros::ServiceClient goal_task_space_path_position_only_client_;
-  //position-trajectory
+  //position + orientation
+  ros::ServiceClient goal_task_space_path_client_;
+
 
   ros::Subscriber joint_states_sub_;
   ros::Subscriber kinematics_pose_sub_;
@@ -40,6 +42,7 @@ class OpenManipulatorTeleop
   std::vector<double> present_joint_angle_;
   std::vector<double> present_kinematic_position_;
   std::vector<double> input_kinematic_position_;//goal position(input)
+  std::vector<double> input_kinematic_orientation_;//goal orientation (input)
   open_manipulator_msgs::KinematicsPose kinematics_pose_;
 
 
@@ -68,6 +71,9 @@ class OpenManipulatorTeleop
   bool setTaskSpacePathFromPresentPositionOnly(std::vector<double> kinematics_pose, double path_time);
   bool setTaskSpacePathPositionOnly(std::vector<double> kinematics_pose, double path_time);
   //added
+  bool setTaskSpacePath(std::vector<double> kinematics_pose, std::vector<double> kinematics_orientation, double path_time);
+
+
   bool setToolControl(std::vector<double> joint_angle);
 
   void printText();

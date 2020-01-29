@@ -26,6 +26,7 @@ OpenManipulatorTeleop::OpenManipulatorTeleop()
   present_joint_angle_.resize(NUM_OF_JOINT);
   present_kinematic_position_.resize(3);
   input_kinematic_position_.resize(3, 0.0);
+  input_kinematic_orientation_.resize(4);
 
   initClient();
   initSubscriber();
@@ -45,6 +46,7 @@ void OpenManipulatorTeleop::initClient()
 {
   goal_joint_space_path_from_present_client_ = node_handle_.serviceClient<open_manipulator_msgs::SetJointPosition>("goal_joint_space_path_from_present");
   goal_task_space_path_from_present_position_only_client_ = node_handle_.serviceClient<open_manipulator_msgs::SetKinematicsPose>("goal_task_space_path_from_present_position_only");
+  goal_task_space_path_client_ = node_handle_.serviceClient<open_manipulator_msgs::SetKinematicsPose>("goal_task_space_path");
 
   goal_joint_space_path_client_ = node_handle_.serviceClient<open_manipulator_msgs::SetJointPosition>("goal_joint_space_path");
   goal_tool_control_client_ = node_handle_.serviceClient<open_manipulator_msgs::SetJointPosition>("goal_tool_control");
@@ -84,11 +86,21 @@ void OpenManipulatorTeleop::kinematicsPoseCallback(const open_manipulator_msgs::
 void OpenManipulatorTeleop::kinematicsPoseinput(const geometry_msgs::Pose::ConstPtr &msg)
 {
   std::vector<double> temp_position;
+  std::vector<double> temp_orientation;
+
   temp_position.push_back(msg->position.x);
   temp_position.push_back(msg->position.y);
   temp_position.push_back(msg->position.z);
+
+  temp_orientation.push_back(msg->orientation.w);
+  temp_orientation.push_back(msg->orientation.x);
+  temp_orientation.push_back(msg->orientation.y);
+  temp_orientation.push_back(msg->orientation.z);
+
   input_kinematic_position_ = temp_position;
-  setGoal('4');
+  input_kinematic_orientation_ = temp_orientation;
+  ROS_INFO("run\n");
+  setGoal('5');
 }
 
 std::vector<double> OpenManipulatorTeleop::getPresentJointAngle()
@@ -157,6 +169,29 @@ bool OpenManipulatorTeleop::setTaskSpacePathFromPresentPositionOnly(std::vector<
   srv.request.path_time = path_time;
 
   if(goal_task_space_path_from_present_position_only_client_.call(srv))
+  {
+    return srv.response.is_planned;
+  }
+  return false;
+}
+
+//add task space path ===> position + orientation
+bool OpenManipulatorTeleop::setTaskSpacePath(std::vector<double> kinematics_pose, std::vector<double> kinematics_orientation, double path_time)
+{
+  open_manipulator_msgs::SetKinematicsPose srv;
+  srv.request.end_effector_name = priv_node_handle_.param<std::string>("end_effector_name", "gripper");
+  srv.request.kinematics_pose.pose.position.x = kinematics_pose.at(0);
+  srv.request.kinematics_pose.pose.position.y = kinematics_pose.at(1);
+  srv.request.kinematics_pose.pose.position.z = kinematics_pose.at(2);
+
+  srv.request.kinematics_pose.pose.orientation.w = kinematics_orientation.at(0);
+  srv.request.kinematics_pose.pose.orientation.x = kinematics_orientation.at(1);
+  srv.request.kinematics_pose.pose.orientation.y = kinematics_orientation.at(2);
+  srv.request.kinematics_pose.pose.orientation.z = kinematics_orientation.at(3);
+
+  srv.request.path_time = path_time;
+
+  if(goal_task_space_path_client_.call(srv))
   {
     return srv.response.is_planned;
   }
@@ -250,14 +285,19 @@ void OpenManipulatorTeleop::setGoal(char ch)
   {
     printf("input : 3 \tnew pose by joint modify\n");
 
-    std::vector<std::string> joint_name;
-    std::vector<double> joint_angle;
-    double path_time = 2.0;
-    joint_name.push_back("joint1"); joint_angle.push_back(1.0);
-    joint_name.push_back("joint2"); joint_angle.push_back(1.0);
-    joint_name.push_back("joint3"); joint_angle.push_back(1.0);
-    joint_name.push_back("joint4"); joint_angle.push_back(1.0);
-    setJointSpacePath(joint_name, joint_angle, path_time);
+    printf("input ori X: %.3lf Y: %.3lf Z: %.3lf\n",
+    input_kinematic_orientation_.at(0),
+    input_kinematic_orientation_.at(1),
+    input_kinematic_orientation_.at(2));
+
+    // std::vector<std::string> joint_name;
+    // std::vector<double> joint_angle;
+    // double path_time = 2.0;
+    // joint_name.push_back("joint1"); joint_angle.push_back(1.0);
+    // joint_name.push_back("joint2"); joint_angle.push_back(1.0);
+    // joint_name.push_back("joint3"); joint_angle.push_back(1.0);
+    // joint_name.push_back("joint4"); joint_angle.push_back(1.0);
+    // setJointSpacePath(joint_name, joint_angle, path_time);
   }
   else if(ch == '4')
   {
@@ -272,6 +312,24 @@ void OpenManipulatorTeleop::setGoal(char ch)
     goalPose.at(2) = input_kinematic_position_.at(2) - getPresentKinematicsPose().at(2);
 
     setTaskSpacePathFromPresentPositionOnly(goalPose, PATH_TIME);
+  }
+  else if(ch == '5')
+  {
+    printf("input : 5 \tpose + orientation\n");
+
+    std::vector<double> goalOrientation;
+    goalOrientation.resize(4);
+
+    goalPose.at(0) = input_kinematic_position_.at(0);
+    goalPose.at(1) = input_kinematic_position_.at(1);
+    goalPose.at(2) = input_kinematic_position_.at(2);
+
+    goalOrientation.at(0) = input_kinematic_orientation_.at(0);
+    goalOrientation.at(1) = input_kinematic_orientation_.at(1);
+    goalOrientation.at(2) = input_kinematic_orientation_.at(2);
+    goalOrientation.at(3) = input_kinematic_orientation_.at(3);
+
+    setTaskSpacePath(goalPose, goalOrientation, PATH_TIME);
   }
 }
 
