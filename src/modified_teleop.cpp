@@ -27,6 +27,7 @@ OpenManipulatorTeleop::OpenManipulatorTeleop()
   present_kinematic_position_.resize(3);
   input_kinematic_position_.resize(3, 0.0);
   input_kinematic_orientation_.resize(4);
+  input_gripper_angle_.resize(1);
 
   initClient();
   initSubscriber();
@@ -55,8 +56,8 @@ void OpenManipulatorTeleop::initSubscriber()
 {
   joint_states_sub_ = node_handle_.subscribe("joint_states", 10, &OpenManipulatorTeleop::jointStatesCallback, this);
   kinematics_pose_sub_ = node_handle_.subscribe("kinematics_pose", 10, &OpenManipulatorTeleop::kinematicsPoseCallback, this);
-  input_kinematics_pose_sub_ = node_handle_.subscribe("input_kinematics_pose", 10, &OpenManipulatorTeleop::kinematicsPoseinput, this);
-
+  input_kinematics_pose_sub_ = node_handle_.subscribe("input_kinematics_pose", 10, &OpenManipulatorTeleop::kinematicsPoseInput, this);
+  input_gripper_sub_ = node_handle_.subscribe("input_gripper_angle", 10, &OpenManipulatorTeleop::gripperInput, this);
 }
 
 void OpenManipulatorTeleop::jointStatesCallback(const sensor_msgs::JointState::ConstPtr &msg)
@@ -83,7 +84,7 @@ void OpenManipulatorTeleop::kinematicsPoseCallback(const open_manipulator_msgs::
   present_kinematic_position_ = temp_position;
 }
 
-void OpenManipulatorTeleop::kinematicsPoseinput(const geometry_msgs::Pose::ConstPtr &msg)
+void OpenManipulatorTeleop::kinematicsPoseInput(const geometry_msgs::Pose::ConstPtr &msg)
 {
   std::vector<double> temp_position;
   std::vector<double> temp_orientation;
@@ -101,6 +102,14 @@ void OpenManipulatorTeleop::kinematicsPoseinput(const geometry_msgs::Pose::Const
   input_kinematic_orientation_ = temp_orientation;
   ROS_INFO("run\n");
   setGoal('5');
+}
+
+void OpenManipulatorTeleop::gripperInput(const std_msgs::Float64::ConstPtr &msg)
+{
+  std::vector<double> joint_angle;
+  joint_angle.push_back(msg->data);
+  setToolControl(joint_angle);
+  ROS_INFO("gripper on/of \n");
 }
 
 std::vector<double> OpenManipulatorTeleop::getPresentJointAngle()
