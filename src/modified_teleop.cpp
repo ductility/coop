@@ -48,6 +48,7 @@ void OpenManipulatorTeleop::initClient()
   goal_joint_space_path_from_present_client_ = node_handle_.serviceClient<open_manipulator_msgs::SetJointPosition>("goal_joint_space_path_from_present");
   goal_task_space_path_from_present_position_only_client_ = node_handle_.serviceClient<open_manipulator_msgs::SetKinematicsPose>("goal_task_space_path_from_present_position_only");
   goal_task_space_path_client_ = node_handle_.serviceClient<open_manipulator_msgs::SetKinematicsPose>("goal_task_space_path");
+  goal_task_space_path_position_only_client_ = node_handle_.serviceClient<open_manipulator_msgs::SetKinematicsPose>("goal_task_space_path_position_only");
 
   goal_joint_space_path_client_ = node_handle_.serviceClient<open_manipulator_msgs::SetJointPosition>("goal_joint_space_path");
   goal_tool_control_client_ = node_handle_.serviceClient<open_manipulator_msgs::SetJointPosition>("goal_tool_control");
@@ -101,7 +102,7 @@ void OpenManipulatorTeleop::kinematicsPoseInput(const geometry_msgs::Pose::Const
   input_kinematic_position_ = temp_position;
   input_kinematic_orientation_ = temp_orientation;
   ROS_INFO("run\n");
-  setGoal('5');
+  setGoal('6');
 }
 
 void OpenManipulatorTeleop::gripperInput(const std_msgs::Float64::ConstPtr &msg)
@@ -184,6 +185,23 @@ bool OpenManipulatorTeleop::setTaskSpacePathFromPresentPositionOnly(std::vector<
   return false;
 }
 
+//add task space path ===> position only
+bool OpenManipulatorTeleop::setTaskSpacePathPositionOnly(std::vector<double> kinematics_pose, double path_time)
+{
+  open_manipulator_msgs::SetKinematicsPose srv;
+  srv.request.end_effector_name = priv_node_handle_.param<std::string>("end_effector_name", "gripper");
+  srv.request.kinematics_pose.pose.position.x = kinematics_pose.at(0);
+  srv.request.kinematics_pose.pose.position.y = kinematics_pose.at(1);
+  srv.request.kinematics_pose.pose.position.z = kinematics_pose.at(2);
+  srv.request.path_time = path_time;
+
+  if(goal_task_space_path_position_only_client_.call(srv))
+  {
+    return srv.response.is_planned;
+  }
+  return false;
+}
+
 //add task space path ===> position + orientation
 bool OpenManipulatorTeleop::setTaskSpacePath(std::vector<double> kinematics_pose, std::vector<double> kinematics_orientation, double path_time)
 {
@@ -204,25 +222,6 @@ bool OpenManipulatorTeleop::setTaskSpacePath(std::vector<double> kinematics_pose
   {
     return srv.response.is_planned;
   }
-  return false;
-}
-
-//add task space path not by present position
-bool OpenManipulatorTeleop::setTaskSpacePathPositionOnly(std::vector<double> kinematics_pose, double path_time)
-{
-  open_manipulator_msgs::SetKinematicsPose srv;
-  srv.request.planning_group = priv_node_handle_.param<std::string>("end_effector_name", "gripper");
-  srv.request.kinematics_pose.pose.position.x = kinematics_pose.at(0);
-  srv.request.kinematics_pose.pose.position.y = kinematics_pose.at(1);
-  srv.request.kinematics_pose.pose.position.z = kinematics_pose.at(2);
-
-  srv.request.path_time = path_time;
-
-  if(goal_task_space_path_position_only_client_.call(srv))
-  {
-    return srv.response.is_planned;
-  }
-  printf("fail");
   return false;
 }
 
@@ -292,7 +291,7 @@ void OpenManipulatorTeleop::setGoal(char ch)
   }
   else if(ch == '3')
   {
-    printf("input : 3 \tnew pose by joint modify\n");
+    printf("input : 3 \tprint orientation\n");
 
     printf("input ori X: %.3lf Y: %.3lf Z: %.3lf\n",
     input_kinematic_orientation_.at(0),
@@ -339,6 +338,24 @@ void OpenManipulatorTeleop::setGoal(char ch)
     goalOrientation.at(3) = input_kinematic_orientation_.at(3);
 
     setTaskSpacePath(goalPose, goalOrientation, PATH_TIME);
+  }
+  else if(ch == '6')
+  {
+    printf("input : 6 \tpose + orientation\n");
+
+    // std::vector<double> goalOrientation;
+    // goalOrientation.resize(4);
+
+    goalPose.at(0) = input_kinematic_position_.at(0);
+    goalPose.at(1) = input_kinematic_position_.at(1);
+    goalPose.at(2) = input_kinematic_position_.at(2);
+
+    // goalOrientation.at(0) = input_kinematic_orientation_.at(0);
+    // goalOrientation.at(1) = input_kinematic_orientation_.at(1);
+    // goalOrientation.at(2) = input_kinematic_orientation_.at(2);
+    // goalOrientation.at(3) = input_kinematic_orientation_.at(3);
+
+    setTaskSpacePathPositionOnly(goalPose, PATH_TIME);
   }
 }
 
