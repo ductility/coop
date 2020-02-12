@@ -8,11 +8,15 @@
 #include "open_manipulator_msgs/SetJointPosition.h"
 #include "open_manipulator_msgs/SetKinematicsPose.h"
 
+//Actuator Enable/Disable
+#include "open_manipulator_msgs/SetActuatorState.h"
+
 #include <geometry_msgs/PoseStamped.h>
 
 #include <std_msgs/Float64.h>
 #include <std_msgs/String.h>
 #include <std_msgs/Empty.h>
+#include <std_msgs/Bool.h>
 
 #define NUM_OF_JOINT 4
 #define DELTA 0.01
@@ -33,12 +37,15 @@ class OpenManipulatorTeleop
   ros::ServiceClient goal_task_space_path_position_only_client_;
   //position + orientation
   ros::ServiceClient goal_task_space_path_client_;
-
+  //set_actuator_state_client_;
+  ros::ServiceClient set_actuator_state_client_;
 
   ros::Subscriber joint_states_sub_;
   ros::Subscriber kinematics_pose_sub_;
   ros::Subscriber input_kinematics_pose_sub_;//kk
   ros::Subscriber input_gripper_sub_;//gripper(input)
+  ros::Subscriber input_actuator_sub_;//Actuator(input)
+
 
   std::vector<double> present_joint_angle_;
   std::vector<double> present_kinematic_position_;
@@ -46,6 +53,9 @@ class OpenManipulatorTeleop
   std::vector<double> input_kinematic_orientation_;//goal orientation (input)
   std::vector<double> input_gripper_angle_;//gripper angle(input)
   open_manipulator_msgs::KinematicsPose kinematics_pose_;
+
+  bool open_manipulator_actuator_enabled_;//Actuator 
+
 
 
   struct termios oldt_;
@@ -63,11 +73,14 @@ class OpenManipulatorTeleop
 
   void kinematicsPoseInput(const geometry_msgs::Pose::ConstPtr &msg);//input
   void gripperInput(const std_msgs::Float64::ConstPtr &msg);//input
+  void ActuatorStateInput(const std_msgs::Bool::ConstPtr &msg);//Actuator input
 
   std::vector<double> getPresentJointAngle();
   std::vector<double> getPresentKinematicsPose();
   std::vector<double> getInputKinematicsPose();//input
-
+  
+  bool getOpenManipulatorActuatorState();//Actuator
+  bool setActuatorState(bool actuator_state);//setActuator
 
   bool setJointSpacePathFromPresent(std::vector<std::string> joint_name, std::vector<double> joint_angle, double path_time);
   bool setJointSpacePath(std::vector<std::string> joint_name, std::vector<double> joint_angle, double path_time);

@@ -21,6 +21,7 @@
 
 OpenManipulatorTeleop::OpenManipulatorTeleop()
     :node_handle_(""),
+     open_manipulator_actuator_enabled_(false), 
      priv_node_handle_("~")
 {
   present_joint_angle_.resize(NUM_OF_JOINT);
@@ -52,6 +53,9 @@ void OpenManipulatorTeleop::initClient()
 
   goal_joint_space_path_client_ = node_handle_.serviceClient<open_manipulator_msgs::SetJointPosition>("goal_joint_space_path");
   goal_tool_control_client_ = node_handle_.serviceClient<open_manipulator_msgs::SetJointPosition>("goal_tool_control");
+
+  //Actuator_state_client
+  set_actuator_state_client_ = node_handle_.serviceClient<open_manipulator_msgs::SetActuatorState>("set_actuator_state");
 }
 void OpenManipulatorTeleop::initSubscriber()
 {
@@ -59,6 +63,7 @@ void OpenManipulatorTeleop::initSubscriber()
   kinematics_pose_sub_ = node_handle_.subscribe("kinematics_pose", 10, &OpenManipulatorTeleop::kinematicsPoseCallback, this);
   input_kinematics_pose_sub_ = node_handle_.subscribe("input_kinematics_pose", 10, &OpenManipulatorTeleop::kinematicsPoseInput, this);
   input_gripper_sub_ = node_handle_.subscribe("input_gripper_angle", 10, &OpenManipulatorTeleop::gripperInput, this);
+  input_actuator_sub_ = node_handle_.subscribe("input_actuator_state", 10, &OpenManipulatorTeleop::ActuatorStateInput, this);//Actuator controll
 }
 
 void OpenManipulatorTeleop::jointStatesCallback(const sensor_msgs::JointState::ConstPtr &msg)
@@ -112,6 +117,29 @@ void OpenManipulatorTeleop::gripperInput(const std_msgs::Float64::ConstPtr &msg)
   setToolControl(joint_angle);
   ROS_INFO("gripper on/of \n");
 }
+
+//Actuator Enable or Disable
+void OpenManipulatorTeleop::ActuatorStateInput(const std_msgs::Bool::ConstPtr &msg)
+{
+  setActuatorState(msg->data);
+  ROS_INFO("Actuator on/of \n");
+}
+
+//Actuator
+bool OpenManipulatorTeleop::setActuatorState(bool actuator_state)
+{
+  open_manipulator_msgs::SetActuatorState srv;
+  srv.request.set_actuator_state = actuator_state;
+
+  if(set_actuator_state_client_.call(srv))
+  {
+    return srv.response.is_planned;
+  }
+  return false;
+}
+
+
+
 
 std::vector<double> OpenManipulatorTeleop::getPresentJointAngle()
 {
@@ -356,6 +384,11 @@ void OpenManipulatorTeleop::setGoal(char ch)
     // goalOrientation.at(3) = input_kinematic_orientation_.at(3);
 
     setTaskSpacePathPositionOnly(goalPose, PATH_TIME);
+  }
+  else if(ch == '7')
+  {
+    printf("input : 7 \tpose + orientation\n");
+    setActuatorState(false);
   }
 }
 
