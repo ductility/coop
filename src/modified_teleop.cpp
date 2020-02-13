@@ -20,8 +20,7 @@
 #include <unistd.h>
 
 OpenManipulatorTeleop::OpenManipulatorTeleop()
-    :node_handle_(""),
-     open_manipulator_actuator_enabled_(false), 
+    :node_handle_(""), 
      priv_node_handle_("~")
 {
   present_joint_angle_.resize(NUM_OF_JOINT);
@@ -29,6 +28,8 @@ OpenManipulatorTeleop::OpenManipulatorTeleop()
   input_kinematic_position_.resize(3, 0.0);
   input_kinematic_orientation_.resize(4);
   input_gripper_angle_.resize(1);
+  start_position_stamp_.resize(3);
+  end_position_stamp_.resize(3);
 
   initClient();
   initSubscriber();
@@ -61,9 +62,14 @@ void OpenManipulatorTeleop::initSubscriber()
 {
   joint_states_sub_ = node_handle_.subscribe("joint_states", 10, &OpenManipulatorTeleop::jointStatesCallback, this);
   kinematics_pose_sub_ = node_handle_.subscribe("kinematics_pose", 10, &OpenManipulatorTeleop::kinematicsPoseCallback, this);
+
   input_kinematics_pose_sub_ = node_handle_.subscribe("input_kinematics_pose", 10, &OpenManipulatorTeleop::kinematicsPoseInput, this);
   input_gripper_sub_ = node_handle_.subscribe("input_gripper_angle", 10, &OpenManipulatorTeleop::gripperInput, this);
   input_actuator_sub_ = node_handle_.subscribe("input_actuator_state", 10, &OpenManipulatorTeleop::ActuatorStateInput, this);//Actuator controll
+
+  position_stamp_sub_ = node_handle_.subscribe("position_stamp", 10, &OpenManipulatorTeleop::positionStamp, this);//position stamp start end
+
+  hand_guide_move_sub_ = node_handle_.subscribe("hand_guide_move", 10, &OpenManipulatorTeleop::handGuideMove, this);//hand guide move
 }
 
 void OpenManipulatorTeleop::jointStatesCallback(const sensor_msgs::JointState::ConstPtr &msg)
@@ -122,7 +128,12 @@ void OpenManipulatorTeleop::gripperInput(const std_msgs::Float64::ConstPtr &msg)
 void OpenManipulatorTeleop::ActuatorStateInput(const std_msgs::Bool::ConstPtr &msg)
 {
   setActuatorState(msg->data);
-  ROS_INFO("Actuator on/of \n");
+  if(msg->data){
+    ROS_INFO("Actuator Enabled\n");
+  }
+  else{
+    ROS_INFO("Actuator Disabled\n");
+  }
 }
 
 //Actuator
@@ -138,7 +149,31 @@ bool OpenManipulatorTeleop::setActuatorState(bool actuator_state)
   return false;
 }
 
+//positionStamp
+void OpenManipulatorTeleop::positionStamp(const std_msgs::Bool::ConstPtr &msg)
+{
+  if(msg->data){
+    start_position_stamp_ = getPresentKinematicsPose();
+    ROS_INFO("Start Position Stamp Recorded\n");
 
+  }
+  else{
+    end_position_stamp_ = getPresentKinematicsPose();
+    ROS_INFO("End Position Stamp Recorded \n");
+  }
+}
+
+//hand guide move
+void OpenManipulatorTeleop::handGuideMove(const std_msgs::Bool::ConstPtr &msg)
+{
+  input_kinematic_position_ = start_position_stamp_;
+  ROS_INFO("run\n");
+  setGoal('6');
+  usleep(1000000);
+  input_kinematic_position_ = end_position_stamp_;
+  ROS_INFO("run\n");
+  setGoal('6');
+}
 
 
 std::vector<double> OpenManipulatorTeleop::getPresentJointAngle()

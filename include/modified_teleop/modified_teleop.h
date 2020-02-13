@@ -45,6 +45,8 @@ class OpenManipulatorTeleop
   ros::Subscriber input_kinematics_pose_sub_;//kk
   ros::Subscriber input_gripper_sub_;//gripper(input)
   ros::Subscriber input_actuator_sub_;//Actuator(input)
+  ros::Subscriber position_stamp_sub_;//position stamp
+  ros::Subscriber hand_guide_move_sub_;//hand guide move
 
 
   std::vector<double> present_joint_angle_;
@@ -52,10 +54,9 @@ class OpenManipulatorTeleop
   std::vector<double> input_kinematic_position_;//goal position(input)
   std::vector<double> input_kinematic_orientation_;//goal orientation (input)
   std::vector<double> input_gripper_angle_;//gripper angle(input)
+  std::vector<double> start_position_stamp_;//position stamp
+  std::vector<double> end_position_stamp_;//position stamp
   open_manipulator_msgs::KinematicsPose kinematics_pose_;
-
-  bool open_manipulator_actuator_enabled_;//Actuator 
-
 
 
   struct termios oldt_;
@@ -74,6 +75,8 @@ class OpenManipulatorTeleop
   void kinematicsPoseInput(const geometry_msgs::Pose::ConstPtr &msg);//input
   void gripperInput(const std_msgs::Float64::ConstPtr &msg);//input
   void ActuatorStateInput(const std_msgs::Bool::ConstPtr &msg);//Actuator input
+  void positionStamp(const std_msgs::Bool::ConstPtr &msg);//Position Stamp
+  void handGuideMove(const std_msgs::Bool::ConstPtr &msg);//hand guide move
 
   std::vector<double> getPresentJointAngle();
   std::vector<double> getPresentKinematicsPose();
