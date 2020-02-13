@@ -21,7 +21,7 @@
 #define NUM_OF_JOINT 4
 #define DELTA 0.01
 #define JOINT_DELTA 0.05
-#define PATH_TIME 1.5
+#define PATH_TIME 2
 
 class OpenManipulatorTeleop
 {

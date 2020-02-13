@@ -23,13 +23,13 @@ OpenManipulatorTeleop::OpenManipulatorTeleop()
     :node_handle_(""), 
      priv_node_handle_("~")
 {
-  present_joint_angle_.resize(NUM_OF_JOINT + 1);
+  present_joint_angle_.resize(NUM_OF_JOINT);
   present_kinematic_position_.resize(3);
   input_kinematic_position_.resize(3);
   input_kinematic_orientation_.resize(4);
   input_gripper_angle_.resize(1);
-  start_joint_stamp_.resize(NUM_OF_JOINT + 1);
-  end_joint_stamp_.resize(NUM_OF_JOINT + 1);
+  start_joint_stamp_.resize(NUM_OF_JOINT);
+  end_joint_stamp_.resize(NUM_OF_JOINT);
 
   initClient();
   initSubscriber();
@@ -167,14 +167,13 @@ void OpenManipulatorTeleop::positionStamp(const std_msgs::Bool::ConstPtr &msg)
 void OpenManipulatorTeleop::handGuideMove(const std_msgs::Bool::ConstPtr &msg)
 {
   std::vector<std::string> joint_name;
-  double path_time = 2.0;
   joint_name.push_back("joint1");
   joint_name.push_back("joint2");
   joint_name.push_back("joint3");
   joint_name.push_back("joint4");
-  setJointSpacePath(joint_name, start_joint_stamp_, path_time);
+  setJointSpacePath(joint_name, start_joint_stamp_, PATH_TIME);
   usleep(2000000);
-  setJointSpacePath(joint_name, end_joint_stamp_, path_time);
+  setJointSpacePath(joint_name, end_joint_stamp_, PATH_TIME);
   ROS_INFO("run\n");
 }
 
