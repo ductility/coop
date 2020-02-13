@@ -23,13 +23,13 @@ OpenManipulatorTeleop::OpenManipulatorTeleop()
     :node_handle_(""), 
      priv_node_handle_("~")
 {
-  present_joint_angle_.resize(NUM_OF_JOINT);
+  present_joint_angle_.resize(NUM_OF_JOINT + 1);
   present_kinematic_position_.resize(3);
-  input_kinematic_position_.resize(3, 0.0);
+  input_kinematic_position_.resize(3);
   input_kinematic_orientation_.resize(4);
   input_gripper_angle_.resize(1);
-  start_position_stamp_.resize(3);
-  end_position_stamp_.resize(3);
+  start_joint_stamp_.resize(NUM_OF_JOINT + 1);
+  end_joint_stamp_.resize(NUM_OF_JOINT + 1);
 
   initClient();
   initSubscriber();
@@ -67,7 +67,7 @@ void OpenManipulatorTeleop::initSubscriber()
   input_gripper_sub_ = node_handle_.subscribe("input_gripper_angle", 10, &OpenManipulatorTeleop::gripperInput, this);
   input_actuator_sub_ = node_handle_.subscribe("input_actuator_state", 10, &OpenManipulatorTeleop::ActuatorStateInput, this);//Actuator controll
 
-  position_stamp_sub_ = node_handle_.subscribe("position_stamp", 10, &OpenManipulatorTeleop::positionStamp, this);//position stamp start end
+  position_stamp_sub_ = node_handle_.subscribe("joint_angle_stamp", 10, &OpenManipulatorTeleop::positionStamp, this);//position stamp start end
 
   hand_guide_move_sub_ = node_handle_.subscribe("hand_guide_move", 10, &OpenManipulatorTeleop::handGuideMove, this);//hand guide move
 }
@@ -153,26 +153,29 @@ bool OpenManipulatorTeleop::setActuatorState(bool actuator_state)
 void OpenManipulatorTeleop::positionStamp(const std_msgs::Bool::ConstPtr &msg)
 {
   if(msg->data){
-    start_position_stamp_ = getPresentKinematicsPose();
-    ROS_INFO("Start Position Stamp Recorded\n");
+    start_joint_stamp_ = getPresentJointAngle();
+    ROS_INFO("Start Joint Angle Stamp Recorded\n");
 
   }
   else{
-    end_position_stamp_ = getPresentKinematicsPose();
-    ROS_INFO("End Position Stamp Recorded \n");
+    end_joint_stamp_ = getPresentJointAngle();
+    ROS_INFO("End Joint Angle Stamp Recorded \n");
   }
 }
 
 //hand guide move
 void OpenManipulatorTeleop::handGuideMove(const std_msgs::Bool::ConstPtr &msg)
 {
-  input_kinematic_position_ = start_position_stamp_;
+  std::vector<std::string> joint_name;
+  double path_time = 2.0;
+  joint_name.push_back("joint1");
+  joint_name.push_back("joint2");
+  joint_name.push_back("joint3");
+  joint_name.push_back("joint4");
+  setJointSpacePath(joint_name, start_joint_stamp_, path_time);
+  usleep(2000000);
+  setJointSpacePath(joint_name, end_joint_stamp_, path_time);
   ROS_INFO("run\n");
-  setGoal('6');
-  usleep(1000000);
-  input_kinematic_position_ = end_position_stamp_;
-  ROS_INFO("run\n");
-  setGoal('6');
 }
 
 
@@ -424,6 +427,19 @@ void OpenManipulatorTeleop::setGoal(char ch)
   {
     printf("input : 7 \tpose + orientation\n");
     setActuatorState(false);
+  }
+  else if(ch == '8')
+  {
+    printf("input : 8 \tmove to joint angle\n");
+    
+    std::vector<std::string> joint_name;
+    std::vector<double> joint_angle;
+    double path_time = 2.0;
+    joint_name.push_back("joint1"); joint_angle.push_back(0.0);
+    joint_name.push_back("joint2"); joint_angle.push_back(0.0);
+    joint_name.push_back("joint3"); joint_angle.push_back(0.0);
+    joint_name.push_back("joint4"); joint_angle.push_back(0.0);
+    setJointSpacePath(joint_name, joint_angle, path_time);
   }
 }
 

@@ -54,8 +54,8 @@ class OpenManipulatorTeleop
   std::vector<double> input_kinematic_position_;//goal position(input)
   std::vector<double> input_kinematic_orientation_;//goal orientation (input)
   std::vector<double> input_gripper_angle_;//gripper angle(input)
-  std::vector<double> start_position_stamp_;//position stamp
-  std::vector<double> end_position_stamp_;//position stamp
+  std::vector<double> start_joint_stamp_;//position stamp
+  std::vector<double> end_joint_stamp_;//position stamp
   open_manipulator_msgs::KinematicsPose kinematics_pose_;
 
 
