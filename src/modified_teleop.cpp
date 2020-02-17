@@ -69,7 +69,8 @@ void OpenManipulatorTeleop::initSubscriber()
 
   position_stamp_sub_ = node_handle_.subscribe("joint_angle_stamp", 10, &OpenManipulatorTeleop::positionStamp, this);//position stamp start end
 
-  hand_guide_move_sub_ = node_handle_.subscribe("hand_guide_move", 10, &OpenManipulatorTeleop::handGuideMove, this);//hand guide move
+  hand_guide_move_point_sub_ = node_handle_.subscribe("hand_guide_move_point", 10, &OpenManipulatorTeleop::handGuideMovePoint, this);//hand guide move point
+  hand_guide_move_path_sub_ = node_handle_.subscribe("hand_guide_move_path", 10, &OpenManipulatorTeleop::handGuideMovePath, this);//hand guide move path
 }
 
 void OpenManipulatorTeleop::jointStatesCallback(const sensor_msgs::JointState::ConstPtr &msg)
@@ -113,8 +114,9 @@ void OpenManipulatorTeleop::kinematicsPoseInput(const geometry_msgs::Pose::Const
   input_kinematic_position_ = temp_position;
   input_kinematic_orientation_ = temp_orientation;
   ROS_INFO("run\n");
-  while(buffer_index_ < 99){  setGoal('9');}
-  buffer_index_ = 0;
+  setGoal('6');
+  // while(buffer_index_ < 99){  setGoal('9');}
+  // buffer_index_ = 0;
 }
 
 void OpenManipulatorTeleop::gripperInput(const std_msgs::Float64::ConstPtr &msg)
@@ -153,19 +155,18 @@ bool OpenManipulatorTeleop::setActuatorState(bool actuator_state)
 //positionStamp
 void OpenManipulatorTeleop::positionStamp(const std_msgs::Bool::ConstPtr &msg)
 {
-  if(msg->data){
+  stamp = msg->data;
+  if(stamp){
     start_joint_stamp_ = getPresentJointAngle();
     ROS_INFO("Start Joint Angle Stamp Recorded\n");
-
   }
   else{
-    end_joint_stamp_ = getPresentJointAngle();
     ROS_INFO("End Joint Angle Stamp Recorded \n");
   }
 }
 
-//hand guide move
-void OpenManipulatorTeleop::handGuideMove(const std_msgs::Bool::ConstPtr &msg)
+//hand guide move point
+void OpenManipulatorTeleop::handGuideMovePoint(const std_msgs::Bool::ConstPtr &msg)
 {
   std::vector<std::string> joint_name;
   joint_name.push_back("joint1");
@@ -178,6 +179,12 @@ void OpenManipulatorTeleop::handGuideMove(const std_msgs::Bool::ConstPtr &msg)
   ROS_INFO("run\n");
 }
 
+//hand guide move path
+void OpenManipulatorTeleop::handGuideMovePath(const std_msgs::Bool::ConstPtr &msg)
+{
+  playstamp = msg->data;
+  buffer_index_ = 0;
+}
 
 std::vector<double> OpenManipulatorTeleop::getPresentJointAngle()
 {
@@ -480,12 +487,13 @@ void OpenManipulatorTeleop::setGoal(char ch)
 
 void OpenManipulatorTeleop::publishCallback(const ros::TimerEvent&)
 {
-  if((int)(record_buffer_.size()) < 100){
+  if(stamp){
     WaypointBuffer temp;
     // record_buffer_.clear();
     temp.joint_angle = getPresentJointAngle();
     temp.tool_position = 0;
     record_buffer_.push_back(temp);
+    end_joint_stamp_ = temp.joint_angle;
 
     static int count = 0;
     if(!(count % 5))
@@ -493,6 +501,29 @@ void OpenManipulatorTeleop::publishCallback(const ros::TimerEvent&)
       printText();
     }
     count ++;
+  }
+
+  if(playstamp && record_buffer_.size() > buffer_index_)
+  {
+    std::vector<std::string> joint_name;
+    std::vector<double> joint_angle;
+    joint_name.push_back("joint1");
+    joint_name.push_back("joint2");
+    joint_name.push_back("joint3");
+    joint_name.push_back("joint4");
+    joint_angle = record_buffer_.at(buffer_index_).joint_angle;
+    std::vector<double> gripper_angle;
+    gripper_angle.push_back(record_buffer_.at(buffer_index_).tool_position);
+
+    setJointSpacePath(joint_name , joint_angle, LOOP_RATE * 10);
+    setToolControl(gripper_angle);
+    printf("\n%d",(int)(buffer_index_));
+    printf("\nrecorded Joint Angle J1: %.3lf J2: %.3lf J3: %.3lf J4: %.3lf\n",
+      record_buffer_.at(buffer_index_).joint_angle.at(0),
+      record_buffer_.at(buffer_index_).joint_angle.at(1),
+      record_buffer_.at(buffer_index_).joint_angle.at(2),
+      record_buffer_.at(buffer_index_).joint_angle.at(3));
+    buffer_index_ ++;
   }
 }
 

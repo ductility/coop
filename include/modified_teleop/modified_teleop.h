@@ -54,8 +54,8 @@ class OpenManipulatorTeleop
   ros::Subscriber input_gripper_sub_;//gripper(input)
   ros::Subscriber input_actuator_sub_;//Actuator(input)
   ros::Subscriber position_stamp_sub_;//position stamp
-  ros::Subscriber hand_guide_move_sub_;//hand guide move
-
+  ros::Subscriber hand_guide_move_point_sub_;//hand guide move point
+  ros::Subscriber hand_guide_move_path_sub_;//hand guide move path
 
   std::vector<double> present_joint_angle_;
   std::vector<double> present_kinematic_position_;
@@ -92,7 +92,9 @@ class OpenManipulatorTeleop
   void gripperInput(const std_msgs::Float64::ConstPtr &msg);//input
   void ActuatorStateInput(const std_msgs::Bool::ConstPtr &msg);//Actuator input
   void positionStamp(const std_msgs::Bool::ConstPtr &msg);//Position Stamp
-  void handGuideMove(const std_msgs::Bool::ConstPtr &msg);//hand guide move
+  void handGuideMovePoint(const std_msgs::Bool::ConstPtr &msg);//hand guide move point
+  void handGuideMovePath(const std_msgs::Bool::ConstPtr &msg);//hand guide move path
+
 
   std::vector<double> getPresentJointAngle();
   std::vector<double> getPresentKinematicsPose();
@@ -100,6 +102,9 @@ class OpenManipulatorTeleop
   
   bool getOpenManipulatorActuatorState();//Actuator
   bool setActuatorState(bool actuator_state);//setActuator
+
+  bool stamp = false;//레코드 할 때 참 -> 루프돌리기 거짓 루프탈출.
+  bool playstamp = false;// 레코드 실행하기
 
   bool setJointSpacePathFromPresent(std::vector<std::string> joint_name, std::vector<double> joint_angle, double path_time);
   bool setJointSpacePath(std::vector<std::string> joint_name, std::vector<double> joint_angle, double path_time);
