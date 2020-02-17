@@ -22,6 +22,14 @@
 #define DELTA 0.01
 #define JOINT_DELTA 0.05
 #define PATH_TIME 2
+#define LOOP_RATE 0.05
+
+//Buffer
+typedef struct _WaypointBuffer
+{
+  std::vector<double> joint_angle;
+  double tool_position;
+} WaypointBuffer;
 
 class OpenManipulatorTeleop
 {
@@ -58,6 +66,12 @@ class OpenManipulatorTeleop
   std::vector<double> end_joint_stamp_;//position stamp
   open_manipulator_msgs::KinematicsPose kinematics_pose_;
 
+  double service_call_period_;//hand huide record
+
+  std::vector<WaypointBuffer> record_buffer_;
+  int buffer_index_ = 0;
+
+
 
   struct termios oldt_;
 
@@ -71,6 +85,8 @@ class OpenManipulatorTeleop
 
   void jointStatesCallback(const sensor_msgs::JointState::ConstPtr &msg);
   void kinematicsPoseCallback(const open_manipulator_msgs::KinematicsPose::ConstPtr &msg);
+
+  double getServiceCallPeriod() {return service_call_period_;}//hand guide record
 
   void kinematicsPoseInput(const geometry_msgs::Pose::ConstPtr &msg);//input
   void gripperInput(const std_msgs::Float64::ConstPtr &msg);//input
@@ -92,8 +108,9 @@ class OpenManipulatorTeleop
   //added
   bool setTaskSpacePath(std::vector<double> kinematics_pose, std::vector<double> kinematics_orientation, double path_time);
 
-
   bool setToolControl(std::vector<double> joint_angle);
+
+  void publishCallback(const ros::TimerEvent&); // hand guide record
 
   void printText();
   void setGoal(char ch);

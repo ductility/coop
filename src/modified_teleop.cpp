@@ -113,7 +113,8 @@ void OpenManipulatorTeleop::kinematicsPoseInput(const geometry_msgs::Pose::Const
   input_kinematic_position_ = temp_position;
   input_kinematic_orientation_ = temp_orientation;
   ROS_INFO("run\n");
-  setGoal('6');
+  while(buffer_index_ < 99){  setGoal('9');}
+  buffer_index_ = 0;
 }
 
 void OpenManipulatorTeleop::gripperInput(const std_msgs::Float64::ConstPtr &msg)
@@ -172,7 +173,7 @@ void OpenManipulatorTeleop::handGuideMove(const std_msgs::Bool::ConstPtr &msg)
   joint_name.push_back("joint3");
   joint_name.push_back("joint4");
   setJointSpacePath(joint_name, start_joint_stamp_, PATH_TIME);
-  usleep(2000000);
+  usleep(1000000);
   setJointSpacePath(joint_name, end_joint_stamp_, PATH_TIME);
   ROS_INFO("run\n");
 }
@@ -295,16 +296,24 @@ void OpenManipulatorTeleop::printText()
   printf("\n");
   printf("---------------------------\n");
 
-  printf("Present Joint Angle J1: %.3lf J2: %.3lf J3: %.3lf J4: %.3lf\n",
-         getPresentJointAngle().at(0),
-         getPresentJointAngle().at(1),
-         getPresentJointAngle().at(2),
-         getPresentJointAngle().at(3));
-  printf("Present Kinematics Position X: %.3lf Y: %.3lf Z: %.3lf\n",
-         getPresentKinematicsPose().at(0),
-         getPresentKinematicsPose().at(1),
-         getPresentKinematicsPose().at(2));
-  printf("---------------------------\n");
+  // printf("Present Joint Angle J1: %.3lf J2: %.3lf J3: %.3lf J4: %.3lf\n",
+  //        getPresentJointAngle().at(0),
+  //        getPresentJointAngle().at(1),
+  //        getPresentJointAngle().at(2),
+  //        getPresentJointAngle().at(3));
+  // printf("Present Kinematics Position X: %.3lf Y: %.3lf Z: %.3lf\n",
+  //        getPresentKinematicsPose().at(0),
+  //        getPresentKinematicsPose().at(1),
+  //        getPresentKinematicsPose().at(2));
+  // printf("---------------------------\n");
+
+  printf("Start Recording Trajectory\n");
+  printf("Buffer Size : %d\n", (int)(record_buffer_.size()));
+  // printf("recorded Joint Angle J1: %.3lf J2: %.3lf J3: %.3lf J4: %.3lf\n",
+  //       record_buffer_.at(buffer_index_).joint_angle.at(0),
+  //       record_buffer_.at(buffer_index_).joint_angle.at(1),
+  //       record_buffer_.at(buffer_index_).joint_angle.at(2),
+  //       record_buffer_.at(buffer_index_).joint_angle.at(3));
 }
 
 void OpenManipulatorTeleop::setGoal(char ch)
@@ -440,18 +449,69 @@ void OpenManipulatorTeleop::setGoal(char ch)
     joint_name.push_back("joint4"); joint_angle.push_back(0.0);
     setJointSpacePath(joint_name, joint_angle, path_time);
   }
+  else if(ch == '9')
+  {
+    printf("input : 9 \trecorded\n");
+    
+    std::vector<std::string> joint_name;
+    std::vector<double> joint_angle;
+    joint_name.push_back("joint1");
+    joint_name.push_back("joint2");
+    joint_name.push_back("joint3");
+    joint_name.push_back("joint4");
+    joint_angle = record_buffer_.at(buffer_index_).joint_angle;
+    std::vector<double> gripper_angle;
+    gripper_angle.push_back(record_buffer_.at(buffer_index_).tool_position);
+
+    if(record_buffer_.size() > buffer_index_)
+    {
+      setJointSpacePath(joint_name , joint_angle, LOOP_RATE * 10);
+      setToolControl(gripper_angle);
+      buffer_index_ ++;
+      printf("\n%d",(int)(buffer_index_));
+      printf("\nrecorded Joint Angle J1: %.3lf J2: %.3lf J3: %.3lf J4: %.3lf\n",
+        record_buffer_.at(buffer_index_).joint_angle.at(0),
+        record_buffer_.at(buffer_index_).joint_angle.at(1),
+        record_buffer_.at(buffer_index_).joint_angle.at(2),
+        record_buffer_.at(buffer_index_).joint_angle.at(3));
+    }
+  }  
+}
+
+void OpenManipulatorTeleop::publishCallback(const ros::TimerEvent&)
+{
+  if((int)(record_buffer_.size()) < 100){
+    WaypointBuffer temp;
+    // record_buffer_.clear();
+    temp.joint_angle = getPresentJointAngle();
+    temp.tool_position = 0;
+    record_buffer_.push_back(temp);
+
+    static int count = 0;
+    if(!(count % 5))
+    {
+      printText();
+    }
+    count ++;
+  }
 }
 
 int main(int argc, char **argv)
 {
   // Init ROS node
   ros::init(argc, argv, "open_manipulator_modified_teleop");
+  ros::NodeHandle node_handle("");
 
   OpenManipulatorTeleop openManipulatorTeleop;
 
   ROS_INFO("OpenManipulator modified teleop launched");
 
-  ros::spin();
+  ros::Timer publish_timer = node_handle.createTimer(ros::Duration(LOOP_RATE), &OpenManipulatorTeleop::publishCallback, &openManipulatorTeleop);
+  
+  while (ros::ok())
+  {
+    ros::spinOnce();
+  }
 
   return 0;
 }
