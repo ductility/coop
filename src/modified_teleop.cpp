@@ -24,6 +24,7 @@ OpenManipulatorTeleop::OpenManipulatorTeleop()
      priv_node_handle_("~")
 {
   present_joint_angle_.resize(NUM_OF_JOINT);
+  present_gripper_angle_.resize(1);
   present_kinematic_position_.resize(3);
   input_kinematic_position_.resize(3);
   input_kinematic_orientation_.resize(4);
@@ -76,7 +77,9 @@ void OpenManipulatorTeleop::initSubscriber()
 void OpenManipulatorTeleop::jointStatesCallback(const sensor_msgs::JointState::ConstPtr &msg)
 {
   std::vector<double> temp_angle;
+  std::vector<double> temp_gripper_angle;
   temp_angle.resize(NUM_OF_JOINT);
+  temp_gripper_angle.resize(1);
   for(std::vector<int>::size_type i = 0; i < msg->name.size(); i ++)
   {
     if(!msg->name.at(i).compare("joint1"))  temp_angle.at(0) = (msg->position.at(i));
@@ -86,6 +89,8 @@ void OpenManipulatorTeleop::jointStatesCallback(const sensor_msgs::JointState::C
   }
   present_joint_angle_ = temp_angle;
 
+  if(!msg->name.at(4).compare("gripper")) temp_gripper_angle.at(0) = (msg->position.at(4));
+  present_gripper_angle_ = temp_gripper_angle;
 }
 
 void OpenManipulatorTeleop::kinematicsPoseCallback(const open_manipulator_msgs::KinematicsPose::ConstPtr &msg)
@@ -157,6 +162,7 @@ void OpenManipulatorTeleop::positionStamp(const std_msgs::Bool::ConstPtr &msg)
 {
   stamp = msg->data;
   if(stamp){
+    record_buffer_.clear();
     start_joint_stamp_ = getPresentJointAngle();
     ROS_INFO("Start Joint Angle Stamp Recorded\n");
   }
@@ -189,6 +195,10 @@ void OpenManipulatorTeleop::handGuideMovePath(const std_msgs::Bool::ConstPtr &ms
 std::vector<double> OpenManipulatorTeleop::getPresentJointAngle()
 {
   return present_joint_angle_;
+}
+std::vector<double> OpenManipulatorTeleop::getPresentGripperAngle()
+{
+  return present_gripper_angle_;
 }
 std::vector<double> OpenManipulatorTeleop::getPresentKinematicsPose()
 {
@@ -489,9 +499,8 @@ void OpenManipulatorTeleop::publishCallback(const ros::TimerEvent&)
 {
   if(stamp){
     WaypointBuffer temp;
-    // record_buffer_.clear();
     temp.joint_angle = getPresentJointAngle();
-    temp.tool_position = 0;
+    temp.tool_position = getPresentGripperAngle().at(0);
     record_buffer_.push_back(temp);
     end_joint_stamp_ = temp.joint_angle;
 

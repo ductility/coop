@@ -22,7 +22,7 @@
 #define DELTA 0.01
 #define JOINT_DELTA 0.05
 #define PATH_TIME 2
-#define LOOP_RATE 0.05
+#define LOOP_RATE 0.1
 
 //Buffer
 typedef struct _WaypointBuffer
@@ -58,6 +58,7 @@ class OpenManipulatorTeleop
   ros::Subscriber hand_guide_move_path_sub_;//hand guide move path
 
   std::vector<double> present_joint_angle_;
+  std::vector<double> present_gripper_angle_;//추가
   std::vector<double> present_kinematic_position_;
   std::vector<double> input_kinematic_position_;//goal position(input)
   std::vector<double> input_kinematic_orientation_;//goal orientation (input)
@@ -97,6 +98,7 @@ class OpenManipulatorTeleop
 
 
   std::vector<double> getPresentJointAngle();
+  std::vector<double> getPresentGripperAngle();
   std::vector<double> getPresentKinematicsPose();
   std::vector<double> getInputKinematicsPose();//input
   
