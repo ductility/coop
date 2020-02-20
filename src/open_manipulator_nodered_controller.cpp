@@ -16,10 +16,10 @@
 
 /* Authors: Darby Lim, Hye-Jong KIM, Ryan Shim, Yong-Ho Na */
 
-#include "modified_teleop/modified_teleop.h"
+#include "open_manipulator_nodered_controller/open_manipulator_nodered_controller.h"
 #include <unistd.h>
 
-OpenManipulatorTeleop::OpenManipulatorTeleop()
+OpenManipulatorNoderedController::OpenManipulatorNoderedController()
     :node_handle_(""), 
      priv_node_handle_("~")
 {
@@ -43,7 +43,7 @@ OpenManipulatorTeleop::OpenManipulatorTeleop()
   ROS_INFO("OpenManipulator initialization");
 }
 
-OpenManipulatorTeleop::~OpenManipulatorTeleop()
+OpenManipulatorNoderedController::~OpenManipulatorNoderedController()
 {
   if(ros::isStarted()) {
     ros::shutdown(); // explicitly needed since we use ros::start();
@@ -51,7 +51,7 @@ OpenManipulatorTeleop::~OpenManipulatorTeleop()
   }
 }
 
-void OpenManipulatorTeleop::initClient()
+void OpenManipulatorNoderedController::initClient()
 {
   goal_joint_space_path_client_ = node_handle_.serviceClient<open_manipulator_msgs::SetJointPosition>("goal_joint_space_path");
   goal_task_space_path_client_ = node_handle_.serviceClient<open_manipulator_msgs::SetKinematicsPose>("goal_task_space_path");
@@ -59,19 +59,19 @@ void OpenManipulatorTeleop::initClient()
   goal_tool_control_client_ = node_handle_.serviceClient<open_manipulator_msgs::SetJointPosition>("goal_tool_control");
   set_actuator_state_client_ = node_handle_.serviceClient<open_manipulator_msgs::SetActuatorState>("set_actuator_state");
 }
-void OpenManipulatorTeleop::initSubscriber()
+void OpenManipulatorNoderedController::initSubscriber()
 {
-  joint_states_sub_ = node_handle_.subscribe("joint_states", 10, &OpenManipulatorTeleop::jointStatesCallback, this);
-  kinematics_pose_sub_ = node_handle_.subscribe("kinematics_pose", 10, &OpenManipulatorTeleop::kinematicsPoseCallback, this);
-  input_kinematics_pose_sub_ = node_handle_.subscribe("input_kinematics_pose", 10, &OpenManipulatorTeleop::kinematicsPoseInputCallback, this);
-  input_gripper_sub_ = node_handle_.subscribe("input_gripper_angle", 10, &OpenManipulatorTeleop::gripperInputCallback, this);
-  input_actuator_sub_ = node_handle_.subscribe("input_actuator_state", 10, &OpenManipulatorTeleop::ActuatorStateCallback, this);
-  position_stamp_sub_ = node_handle_.subscribe("joint_angle_stamp", 10, &OpenManipulatorTeleop::positionStampCallback, this);//position stamp 찍기
-  hand_guide_move_point_sub_ = node_handle_.subscribe("hand_guide_move_point", 10, &OpenManipulatorTeleop::handGuideMovePointCallback, this);
-  hand_guide_move_path_sub_ = node_handle_.subscribe("hand_guide_move_path", 10, &OpenManipulatorTeleop::handGuideMovePathCallback, this);
+  joint_states_sub_ = node_handle_.subscribe("joint_states", 10, &OpenManipulatorNoderedController::jointStatesCallback, this);
+  kinematics_pose_sub_ = node_handle_.subscribe("kinematics_pose", 10, &OpenManipulatorNoderedController::kinematicsPoseCallback, this);
+  input_kinematics_pose_sub_ = node_handle_.subscribe("input_kinematics_pose", 10, &OpenManipulatorNoderedController::kinematicsPoseInputCallback, this);
+  input_gripper_sub_ = node_handle_.subscribe("input_gripper_angle", 10, &OpenManipulatorNoderedController::gripperInputCallback, this);
+  input_actuator_sub_ = node_handle_.subscribe("input_actuator_state", 10, &OpenManipulatorNoderedController::ActuatorStateCallback, this);
+  position_stamp_sub_ = node_handle_.subscribe("joint_angle_stamp", 10, &OpenManipulatorNoderedController::positionStampCallback, this);//position stamp 찍기
+  hand_guide_move_point_sub_ = node_handle_.subscribe("hand_guide_move_point", 10, &OpenManipulatorNoderedController::handGuideMovePointCallback, this);
+  hand_guide_move_path_sub_ = node_handle_.subscribe("hand_guide_move_path", 10, &OpenManipulatorNoderedController::handGuideMovePathCallback, this);
 }
 
-void OpenManipulatorTeleop::jointStatesCallback(const sensor_msgs::JointState::ConstPtr &msg)
+void OpenManipulatorNoderedController::jointStatesCallback(const sensor_msgs::JointState::ConstPtr &msg)
 {
   std::vector<double> temp_angle;
   std::vector<double> temp_gripper_angle;
@@ -90,7 +90,7 @@ void OpenManipulatorTeleop::jointStatesCallback(const sensor_msgs::JointState::C
   present_gripper_angle_ = temp_gripper_angle;
 }
 
-void OpenManipulatorTeleop::kinematicsPoseCallback(const open_manipulator_msgs::KinematicsPose::ConstPtr &msg)
+void OpenManipulatorNoderedController::kinematicsPoseCallback(const open_manipulator_msgs::KinematicsPose::ConstPtr &msg)
 {
   std::vector<double> temp_position;
   temp_position.push_back(msg->pose.position.x);
@@ -99,7 +99,7 @@ void OpenManipulatorTeleop::kinematicsPoseCallback(const open_manipulator_msgs::
   present_kinematic_position_ = temp_position;
 }
 
-void OpenManipulatorTeleop::kinematicsPoseInputCallback(const geometry_msgs::Pose::ConstPtr &msg)
+void OpenManipulatorNoderedController::kinematicsPoseInputCallback(const geometry_msgs::Pose::ConstPtr &msg)
 {
   std::vector<double> temp_position;
   std::vector<double> temp_orientation;
@@ -119,7 +119,7 @@ void OpenManipulatorTeleop::kinematicsPoseInputCallback(const geometry_msgs::Pos
   setMode('1');
 }
 
-void OpenManipulatorTeleop::gripperInputCallback(const std_msgs::Float64::ConstPtr &msg)
+void OpenManipulatorNoderedController::gripperInputCallback(const std_msgs::Float64::ConstPtr &msg)
 {
   std::vector<double> joint_angle;
   joint_angle.push_back(msg->data);
@@ -127,7 +127,7 @@ void OpenManipulatorTeleop::gripperInputCallback(const std_msgs::Float64::ConstP
   ROS_INFO("gripper on/off \n");
 }
 
-void OpenManipulatorTeleop::ActuatorStateCallback(const std_msgs::Bool::ConstPtr &msg)
+void OpenManipulatorNoderedController::ActuatorStateCallback(const std_msgs::Bool::ConstPtr &msg)
 {
   setActuatorState(msg->data);
   if(msg->data){
@@ -138,7 +138,7 @@ void OpenManipulatorTeleop::ActuatorStateCallback(const std_msgs::Bool::ConstPtr
   }
 }
 
-void OpenManipulatorTeleop::positionStampCallback(const std_msgs::Bool::ConstPtr &msg)
+void OpenManipulatorNoderedController::positionStampCallback(const std_msgs::Bool::ConstPtr &msg)
 {
   stamp = msg->data;
   if(stamp){
@@ -151,7 +151,7 @@ void OpenManipulatorTeleop::positionStampCallback(const std_msgs::Bool::ConstPtr
   }
 }
 
-void OpenManipulatorTeleop::handGuideMovePointCallback(const std_msgs::Bool::ConstPtr &msg)
+void OpenManipulatorNoderedController::handGuideMovePointCallback(const std_msgs::Bool::ConstPtr &msg)
 {
   setJointSpacePath(joint_name_, start_joint_stamp_, PATH_TIME);
   usleep(1000000);
@@ -159,14 +159,14 @@ void OpenManipulatorTeleop::handGuideMovePointCallback(const std_msgs::Bool::Con
   ROS_INFO("Move by recorded Point\n");
 }
 
-void OpenManipulatorTeleop::handGuideMovePathCallback(const std_msgs::Bool::ConstPtr &msg)
+void OpenManipulatorNoderedController::handGuideMovePathCallback(const std_msgs::Bool::ConstPtr &msg)
 {
   playstamp = msg->data;
   buffer_index_ = 0;
   ROS_INFO("Move by recorded Path\n");
 }
 
-bool OpenManipulatorTeleop::setActuatorState(bool actuator_state)
+bool OpenManipulatorNoderedController::setActuatorState(bool actuator_state)
 {
   open_manipulator_msgs::SetActuatorState srv;
   srv.request.set_actuator_state = actuator_state;
@@ -178,20 +178,20 @@ bool OpenManipulatorTeleop::setActuatorState(bool actuator_state)
   return false;
 }
 
-std::vector<double> OpenManipulatorTeleop::getPresentJointAngle()
+std::vector<double> OpenManipulatorNoderedController::getPresentJointAngle()
 {
   return present_joint_angle_;
 }
-std::vector<double> OpenManipulatorTeleop::getPresentGripperAngle()
+std::vector<double> OpenManipulatorNoderedController::getPresentGripperAngle()
 {
   return present_gripper_angle_;
 }
-std::vector<double> OpenManipulatorTeleop::getPresentKinematicsPose()
+std::vector<double> OpenManipulatorNoderedController::getPresentKinematicsPose()
 {
   return present_kinematic_position_;
 }
 
-bool OpenManipulatorTeleop::setJointSpacePath(std::vector<std::string> joint_name, std::vector<double> joint_angle, double path_time)
+bool OpenManipulatorNoderedController::setJointSpacePath(std::vector<std::string> joint_name, std::vector<double> joint_angle, double path_time)
 {
   open_manipulator_msgs::SetJointPosition srv;
   srv.request.joint_position.joint_name = joint_name;
@@ -205,7 +205,7 @@ bool OpenManipulatorTeleop::setJointSpacePath(std::vector<std::string> joint_nam
   return false;
 }
 
-bool OpenManipulatorTeleop::setToolControl(std::vector<double> joint_angle)
+bool OpenManipulatorNoderedController::setToolControl(std::vector<double> joint_angle)
 {
   open_manipulator_msgs::SetJointPosition srv;
   srv.request.joint_position.joint_name.push_back(priv_node_handle_.param<std::string>("end_effector_name", "gripper"));
@@ -218,7 +218,7 @@ bool OpenManipulatorTeleop::setToolControl(std::vector<double> joint_angle)
   return false;
 }
 
-bool OpenManipulatorTeleop::setTaskSpacePathPositionOnly(std::vector<double> kinematics_pose, double path_time)
+bool OpenManipulatorNoderedController::setTaskSpacePathPositionOnly(std::vector<double> kinematics_pose, double path_time)
 {
   open_manipulator_msgs::SetKinematicsPose srv;
   srv.request.end_effector_name = priv_node_handle_.param<std::string>("end_effector_name", "gripper");
@@ -234,7 +234,7 @@ bool OpenManipulatorTeleop::setTaskSpacePathPositionOnly(std::vector<double> kin
   return false;
 }
 
-bool OpenManipulatorTeleop::setTaskSpacePath(std::vector<double> kinematics_pose, std::vector<double> kinematics_orientation, double path_time)
+bool OpenManipulatorNoderedController::setTaskSpacePath(std::vector<double> kinematics_pose, std::vector<double> kinematics_orientation, double path_time)
 {
   open_manipulator_msgs::SetKinematicsPose srv;
   srv.request.end_effector_name = priv_node_handle_.param<std::string>("end_effector_name", "gripper");
@@ -256,14 +256,14 @@ bool OpenManipulatorTeleop::setTaskSpacePath(std::vector<double> kinematics_pose
   return false;
 }
 
-void OpenManipulatorTeleop::printBufferSize()
+void OpenManipulatorNoderedController::printBufferSize()
 {
   printf("\n---------------------------\n");
   printf("Start Recording Trajectory\n");
   printf("Buffer Size : %d\n", (int)(record_buffer_.size()));
 }
 
-void OpenManipulatorTeleop::setMode(char ch)
+void OpenManipulatorNoderedController::setMode(char ch)
 {
   std::vector<double> goalPose;  goalPose.resize(3, 0.0);
   std::vector<double> goalJoint; goalJoint.resize(NUM_OF_JOINT, 0.0);
@@ -296,7 +296,7 @@ void OpenManipulatorTeleop::setMode(char ch)
   }
 }
 
-void OpenManipulatorTeleop::publishCallback(const ros::TimerEvent&)
+void OpenManipulatorNoderedController::publishCallback(const ros::TimerEvent&)
 {
   if(stamp){
     WaypointBuffer temp;
@@ -338,11 +338,11 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "open_manipulator_modified_teleop");
   ros::NodeHandle node_handle("");
 
-  OpenManipulatorTeleop openManipulatorTeleop;
+  OpenManipulatorNoderedController openManipulatorNoderedController;
 
   ROS_INFO("OpenManipulator modified teleop launched");
 
-  ros::Timer publish_timer = node_handle.createTimer(ros::Duration(LOOP_RATE), &OpenManipulatorTeleop::publishCallback, &openManipulatorTeleop);
+  ros::Timer publish_timer = node_handle.createTimer(ros::Duration(LOOP_RATE), &OpenManipulatorNoderedController::publishCallback, &openManipulatorNoderedController);
   
   while (ros::ok())
   {

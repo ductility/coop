@@ -3,7 +3,7 @@
   <arg name="end_effector" default="gripper"/>
 
   <group ns="$(arg robot_name)">
-    <node name="modified_teleop" pkg="modified_teleop" type="modified_teleop" output="screen">
+    <node name="open_manipulator_nodered_controller" pkg="open_manipulator_nodered_controller" type="open_manipulator_nodered_controller" output="screen">
       <remap from="kinematics_pose" to="$(arg end_effector)/kinematics_pose"/>
       <param name="end_effector_name" value="$(arg end_effector)"/>
     </node>

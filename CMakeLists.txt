@@ -2,7 +2,7 @@
 # Set minimum required version of cmake, project name and compile options
 ################################################################################
 cmake_minimum_required(VERSION 2.8.3)
-project(modified_teleop)
+project(open_manipulator_nodered_controller)
 
 add_compile_options(-std=c++11)
 
@@ -44,14 +44,14 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_executable(modified_teleop src/modified_teleop.cpp)
-add_dependencies(modified_teleop ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(modified_teleop ${catkin_LIBRARIES} )
+add_executable(open_manipulator_nodered_controller src/open_manipulator_nodered_controller.cpp)
+add_dependencies(open_manipulator_nodered_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(open_manipulator_nodered_controller ${catkin_LIBRARIES} )
 
 ################################################################################
 # Install
 ################################################################################
-install(TARGETS modified_teleop
+install(TARGETS open_manipulator_nodered_controller
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

@@ -1,5 +1,5 @@
-#ifndef OPEN_MANIPULATOR_TELEOP_H
-#define OPEN_MANIPULATOR_TELEOP_H
+#ifndef OPEN_MANIPULATOR_NODERED_CONTROLLER_H
+#define OPEN_MANIPULATOR_NODERED_CONTROLLER_H
 //OPEN_MANIPULATOR_TELEOP에 OPEN_MANIPULATOR_CONTROL_GUI, OPEN_MANIPULATOR_MASTER_SLAVE 를 참고하여 만들었음
 
 #include <ros/ros.h>
@@ -29,7 +29,7 @@ typedef struct _WaypointBuffer
   double tool_position;
 } WaypointBuffer;
 
-class OpenManipulatorTeleop
+class OpenManipulatorNoderedController
 {
  private:
   // ROS NodeHandle
@@ -68,8 +68,8 @@ class OpenManipulatorTeleop
 
  public:
 
-  OpenManipulatorTeleop();
-  ~OpenManipulatorTeleop();
+  OpenManipulatorNoderedController();
+  ~OpenManipulatorNoderedController();
 
   void initClient();
   void initSubscriber();
@@ -108,4 +108,4 @@ class OpenManipulatorTeleop
   void setMode(char ch);//task space path를 이용한 이동에서 position만 고려할 것인지, orientation도 같이 고려할 것인지 선택
 };
 
-#endif //OPEN_MANIPULATOR_TELEOP_H
+#endif //OPEN_MANIPULATOR_NODERED_CONTROLLER_H
