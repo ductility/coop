@@ -2,6 +2,8 @@
 ROS package for controll [OpenManipulator](http://emanual.robotis.com/docs/en/platform/openmanipulator_x/overview/) with Node-RED
 
 ## Functions
+<img src="https://github.com/ductility/images/blob/master/Open_Manipulator_Node_RED_Controller.jpg?raw=true" width="30%"></img>
+<br>
 Gripper Control, Sequential Control(ROUTIN buttons), specific pose button(INITIALPOSE, HOMEPOSE), Hand Guide Mode, Enable or Disable Actuator
 
 ## Installation
