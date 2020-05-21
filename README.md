@@ -27,9 +27,15 @@ $ git clone https://github.com/ROBOTIS-GIT/open_manipulator_msgs.git
 $ git clone https://github.com/ROBOTIS-GIT/open_manipulator_simulations.git
 $ git clone https://github.com/ROBOTIS-GIT/robotis_manipulator.git
 $ git clone https://github.com/ductility/open_manipulator_nodered_controller.git
+
+$ cd open_manipulator
+$ git reset --hard 1228bd4e
+
 $ cd ~/catkin_ws && catkin_make
 
 ```
+The namespace has changed in the latest version of the Open manipulator. So use the software from the previous commit.
+
 * Install required Node-RED libraries.
 ```bash
 $ cd ~/.node-red
