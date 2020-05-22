@@ -77,3 +77,6 @@ $ roslaunch open_manipulator_nodered_controller open_manipulator_nodered_control
 ```
 
 4. Control with Node-RED dashboard!
+
+## To use Docker
+https://github.com/ductility/om-nodered
